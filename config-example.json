@@ -1,0 +1,11 @@
+{
+	"toggl": {
+		"api-token": "xxxxxxxxxxxxxxxxxxxxxxxx"
+	},
+	"youtrack": {
+		"uri": "http://yourserver.com:8080",
+		"login": "user",
+		"password": "secret",
+		"project": "Project"
+	}
+}
