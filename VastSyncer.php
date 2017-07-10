@@ -21,6 +21,7 @@ class VastSyncer extends Syncer {
 			'deploying'     => 'Merging, Deploying',
 			'learning'      => 'Learning',
 			'communicating' => 'Communicating',
+			'sysadmin'      => 'System administration',
 		];
 
 		$workTypesTags = array_intersect($timeEntry->getTags(), array_flip($workTypesMap));
