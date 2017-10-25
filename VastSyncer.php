@@ -85,22 +85,24 @@ class VastSyncer extends Syncer {
 		$workType = $this->extractWorkType($timeEntry);
 		$workDescription = iconv('utf-8', 'cp866', $this->extractWorkDescription($timeEntry));
 
-		echo PHP_EOL . "{$issueCode}: {$timeEntry->getDuration()->toMinutes()}m $workType $workDescription";
+		echo "{$issueCode}: {$timeEntry->getDuration()->toMinutes()}m $workType $workDescription";
 
 		if( ! $this->youtrack->issueExists($issueCode)) {
-			echo ' not found';
+			echo ' not found' . PHP_EOL;
 			return true;
 		}
 
 		$existentWorkItems = $this->youtrack->getWorkItemsOfIssue($issueCode);
 		foreach ($existentWorkItems as $workItem) {
 			/** @noinspection TypeUnsafeComparisonInspection */
-			if ($timeEntry->getStop() == $workItem->getDate()) {
-				echo ' skipped';
+			if ($timeEntry->getStop()->isSameDay($workItem->getDate())
+				&& $timeEntry->getDuration()->toMinutes() == $workItem->getDuration()->toMinutes()) {
+				echo ' skipped' . PHP_EOL;
 				return true;
 			}
 		}
 
+		echo PHP_EOL;
 		return false;
 	}
 
