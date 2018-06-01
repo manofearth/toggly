@@ -1,4 +1,7 @@
 {
+	"common": {
+		"timezone": "Asia/Yakutsk"
+	},
 	"toggl": {
 		"api-token": "xxxxxxxxxxxxxxxxxxxxxxxx"
 	},
@@ -6,6 +9,8 @@
 		"uri": "http://yourserver.com:8080",
 		"login": "user",
 		"password": "secret",
-		"project": "Project"
+		"project": [
+			"Project Code"
+		]
 	}
 }

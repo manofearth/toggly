@@ -34,21 +34,34 @@ class VastSyncer extends Syncer {
 	}
 
 	/**
-	 * @return string
+	 * @return array
 	 */
-	protected function getProjectPrefix() {
-		return 'VST';
+	protected function getProjectPrefixes() {
+        // @todo: query for project codes to which we have access in YouTrack and just use those
+        // @todo: Define project property properly and add getter
+	    if (is_string($this->youtrack->project)) {
+            return array($this->youtrack->project);
+        }
+
+        return $this->youtrack->project;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	protected function extractIssueCode(TimeEntry $timeEntry) {
-		$matches = [];
-		if( ! preg_match('/^(' . $this->getProjectPrefix() . '-\\d+)/', $timeEntry->getDescription(), $matches)) {
-			return null;
-		}
-		return $matches[1];
+	    // Try to match against all possible project codes and return the first one that matches.
+        $projectPrefixes = $this->getProjectPrefixes();
+
+        foreach ($projectPrefixes as $projectPrefix) {
+            $matches = [];
+            if (!preg_match('/^(' . $projectPrefix . '-\\d+)/', $timeEntry->getDescription(), $matches)) {
+                continue;
+            }
+            return $matches[1];
+        }
+
+        return null;
 	}
 
 	/**
@@ -57,11 +70,19 @@ class VastSyncer extends Syncer {
 	 * @return string
 	 */
 	protected function extractIssueSummary(TimeEntry $timeEntry) {
-		$matches = [];
-		if( ! preg_match('/^' . $this->getProjectPrefix() . '-\d+ *(.*)$/', $timeEntry->getDescription(), $matches)) {
-			return '';
-		}
-		return $matches[1];
+        // Try to match against all possible project codes and return the first one that matches.
+        $projectPrefixes = $this->getProjectPrefixes();
+
+        foreach ($projectPrefixes as $projectPrefix) {
+            $matches = [];
+            if (!preg_match('/^' . $projectPrefix . '-\d+ *(.*)$/', $timeEntry->getDescription(),
+                $matches)) {
+                continue;
+            }
+            return $matches[1];
+        }
+
+        return '';
 	}
 
 	/**

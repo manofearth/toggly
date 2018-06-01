@@ -28,7 +28,7 @@ class Gateway {
 	public function __construct(array $config) {
 
 		$this->httpClient = new HttpClient(new UriHttp($config['uri']));
-		$this->project    = (string) $config['project'];
+		$this->project    = !is_array($config['project']) ? array((string) $config['project']) : $config['project'];
 
 		$this->_loginAndSetHeaders($config);
 	}

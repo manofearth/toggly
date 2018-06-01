@@ -1,7 +1,5 @@
 <?php
 
-date_default_timezone_set('Asia/Yakutsk');
-
 define('ROOT_PATH', __DIR__);
 
 require_once ROOT_PATH . '/vendor/autoload.php';
@@ -11,6 +9,8 @@ $autoloader->registerNamespace('TogglSync', ROOT_PATH);
 $autoloader->register();
 
 $config = \Zend\Config\Factory::fromFile(ROOT_PATH . '/config.json');
+
+date_default_timezone_set($config['common']['timezone']);
 
 $toggl = new \TogglSync\Toggl\Gateway(new Zend\Uri\Http('https://www.toggl.com'), $config['toggl']);
 $youtrack = new \TogglSync\Youtrack\Gateway($config['youtrack']);
