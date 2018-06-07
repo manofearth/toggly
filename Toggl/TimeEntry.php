@@ -48,6 +48,13 @@ class TimeEntry {
 		return (new DateTime($this->data->stop))->setTimezone(new DateTimeZone(date_default_timezone_get()));
 	}
 
+    /**
+     * @return bool
+     */
+    public function isRunning() {
+        return $this->data->duration < 0;
+    }
+
 	/**
 	 * @return DateInterval
 	 * @throws \TogglSync\Exception

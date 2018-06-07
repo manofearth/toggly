@@ -96,6 +96,10 @@ class VastSyncer extends Syncer {
 	 * @throws \TogglSync\Youtrack\Exception
 	 */
 	protected function skipTimeEntry(TimeEntry $timeEntry) {
+	    // First and foremost; skip the running time entry.
+        if ($timeEntry->isRunning()) {
+            return true;
+        }
 
 		$issueCode = $this->extractIssueCode($timeEntry);
 
