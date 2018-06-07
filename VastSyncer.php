@@ -110,22 +110,36 @@ class VastSyncer extends Syncer {
 		$workType = $this->extractWorkType($timeEntry);
 		$workDescription = iconv('utf-8', 'cp866', $this->extractWorkDescription($timeEntry));
 
-		echo "{$issueCode}: {$timeEntry->getDuration()->toMinutes()}m $workType $workDescription";
+        $timeEntryInMinutes = $timeEntry->getDuration()->toMinutes();
+        echo "{$issueCode}: {$timeEntryInMinutes}m $workType $workDescription";
 
 		if( ! $this->youtrack->issueExists($issueCode)) {
 			echo ' not found' . PHP_EOL;
 			return true;
 		}
 
-		$existentWorkItems = $this->youtrack->getWorkItemsOfIssue($issueCode);
+		// Record how many tasks with the same key, date, and duration we've already skipped. Keep skipping until we've
+        // skipped every match.
+        static $skipped = [];
+        $timeEntrySkipKey = $issueCode . '_' . $timeEntry->getStop()->format('Y-m-d') . '_' . $timeEntryInMinutes;
+        $skipped += [$timeEntrySkipKey => 0];
+
+        $existentWorkItems = $this->youtrack->getWorkItemsOfIssue($issueCode);
+        $matched = 0;
 		foreach ($existentWorkItems as $workItem) {
 			/** @noinspection TypeUnsafeComparisonInspection */
 			if ($timeEntry->getStop()->isSameDay($workItem->getDate())
-				&& $timeEntry->getDuration()->toMinutes() == $workItem->getDuration()->toMinutes()) {
-				echo ' skipped' . PHP_EOL;
-				return true;
+				&& $timeEntryInMinutes == $workItem->getDuration()->toMinutes()) {
+                $matched++;
 			}
 		}
+
+		// Skip until the number matched is the number skipped. After that, we should allow all entries through.
+        if ($skipped[$timeEntrySkipKey] < $matched) {
+            $skipped[$timeEntrySkipKey]++;
+            echo ' skipped' . PHP_EOL;
+            return true;
+        }
 
 		echo PHP_EOL;
 		return false;
