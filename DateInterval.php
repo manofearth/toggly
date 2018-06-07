@@ -51,7 +51,7 @@ class DateInterval extends \DateInterval {
 		}
 
 		$_minutes = $minutes % 60;
-		if($minutes > 0) {
+        if ($minutes >= 0) {
 			$intervalSpecification .= $_minutes . 'M';
 		}
 
