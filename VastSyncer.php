@@ -34,21 +34,34 @@ class VastSyncer extends Syncer {
 	}
 
 	/**
-	 * @return string
+	 * @return array
 	 */
-	protected function getProjectPrefix() {
-		return 'VST';
+	protected function getProjectPrefixes() {
+        // @todo: query for project codes to which we have access in YouTrack and just use those
+        // @todo: Define project property properly and add getter
+	    if (is_string($this->youtrack->project)) {
+            return array($this->youtrack->project);
+        }
+
+        return $this->youtrack->project;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	protected function extractIssueCode(TimeEntry $timeEntry) {
-		$matches = [];
-		if( ! preg_match('/^(' . $this->getProjectPrefix() . '-\\d+)/', $timeEntry->getDescription(), $matches)) {
-			return null;
-		}
-		return $matches[1];
+	    // Try to match against all possible project codes and return the first one that matches.
+        $projectPrefixes = $this->getProjectPrefixes();
+
+        foreach ($projectPrefixes as $projectPrefix) {
+            $matches = [];
+            if (!preg_match('/^(' . $projectPrefix . '-\\d+)/', $timeEntry->getDescription(), $matches)) {
+                continue;
+            }
+            return $matches[1];
+        }
+
+        return null;
 	}
 
 	/**
@@ -57,11 +70,19 @@ class VastSyncer extends Syncer {
 	 * @return string
 	 */
 	protected function extractIssueSummary(TimeEntry $timeEntry) {
-		$matches = [];
-		if( ! preg_match('/^' . $this->getProjectPrefix() . '-\d+ *(.*)$/', $timeEntry->getDescription(), $matches)) {
-			return '';
-		}
-		return $matches[1];
+        // Try to match against all possible project codes and return the first one that matches.
+        $projectPrefixes = $this->getProjectPrefixes();
+
+        foreach ($projectPrefixes as $projectPrefix) {
+            $matches = [];
+            if (!preg_match('/^' . $projectPrefix . '-\d+ *(.*)$/', $timeEntry->getDescription(),
+                $matches)) {
+                continue;
+            }
+            return $matches[1];
+        }
+
+        return '';
 	}
 
 	/**
@@ -75,6 +96,10 @@ class VastSyncer extends Syncer {
 	 * @throws \TogglSync\Youtrack\Exception
 	 */
 	protected function skipTimeEntry(TimeEntry $timeEntry) {
+	    // First and foremost; skip the running time entry.
+        if ($timeEntry->isRunning()) {
+            return true;
+        }
 
 		$issueCode = $this->extractIssueCode($timeEntry);
 
@@ -85,22 +110,36 @@ class VastSyncer extends Syncer {
 		$workType = $this->extractWorkType($timeEntry);
 		$workDescription = iconv('utf-8', 'cp866', $this->extractWorkDescription($timeEntry));
 
-		echo "{$issueCode}: {$timeEntry->getDuration()->toMinutes()}m $workType $workDescription";
+        $timeEntryInMinutes = $timeEntry->getDuration()->toMinutes();
+        echo "{$issueCode}: {$timeEntryInMinutes}m $workType $workDescription";
 
 		if( ! $this->youtrack->issueExists($issueCode)) {
 			echo ' not found' . PHP_EOL;
 			return true;
 		}
 
-		$existentWorkItems = $this->youtrack->getWorkItemsOfIssue($issueCode);
+		// Record how many tasks with the same key, date, and duration we've already skipped. Keep skipping until we've
+        // skipped every match.
+        static $skipped = [];
+        $timeEntrySkipKey = $issueCode . '_' . $timeEntry->getStop()->format('Y-m-d') . '_' . $timeEntryInMinutes;
+        $skipped += [$timeEntrySkipKey => 0];
+
+        $existentWorkItems = $this->youtrack->getWorkItemsOfIssue($issueCode);
+        $matched = 0;
 		foreach ($existentWorkItems as $workItem) {
 			/** @noinspection TypeUnsafeComparisonInspection */
 			if ($timeEntry->getStop()->isSameDay($workItem->getDate())
-				&& $timeEntry->getDuration()->toMinutes() == $workItem->getDuration()->toMinutes()) {
-				echo ' skipped' . PHP_EOL;
-				return true;
+				&& $timeEntryInMinutes == $workItem->getDuration()->toMinutes()) {
+                $matched++;
 			}
 		}
+
+		// Skip until the number matched is the number skipped. After that, we should allow all entries through.
+        if ($skipped[$timeEntrySkipKey] < $matched) {
+            $skipped[$timeEntrySkipKey]++;
+            echo ' skipped' . PHP_EOL;
+            return true;
+        }
 
 		echo PHP_EOL;
 		return false;

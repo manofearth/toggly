@@ -1,11 +1,19 @@
 {
+	"common": {
+		"timezone": "Asia/Yakutsk",
+		"syncClass": "\\TogglSync\\VastSyncer"
+	},
 	"toggl": {
-		"api-token": "xxxxxxxxxxxxxxxxxxxxxxxx"
+		"api-token": "xxxxxxxxxxxxxxxxxxxxxxxx",
+		"fromDate": "now",
+		"toDate": "now",
 	},
 	"youtrack": {
 		"uri": "http://yourserver.com:8080",
 		"login": "user",
 		"password": "secret",
-		"project": "Project"
+		"project": [
+			"Project Code"
+		]
 	}
 }
